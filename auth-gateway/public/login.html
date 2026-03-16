@@ -710,7 +710,7 @@ body::after {
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
         Compte institutionnel (CNRS / INSERM / Université)
-      </button> -->
+      </button>-->
 
     </form>
 
@@ -891,7 +891,7 @@ function showForgot(e) {
   emailIn.style.borderColor = 'rgba(244,96,12,0.5)';
   setTimeout(() => emailIn.style.borderColor = '', 2000);
   // → Ici : redirect to /forgot-password
-  alert('Veuillez contacter admin@segmentation.fr pour faire une demande de nouveau mot de passe');
+  alert('Un lien de réinitialisation sera envoyé à votre adresse e-mail.');
 }
 
 function handleSSO() {
@@ -906,5 +906,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
+<script src="/login-connector.js"></script>
 </body>
 </html>

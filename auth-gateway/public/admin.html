@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SegStation — Admin</title>
+<title>SegmentStation — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -671,8 +671,8 @@ tr:hover td { background: rgba(255,255,255,0.015); }
 <!-- ─── Sidebar ───────────────────────────────────────── -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="seg">Seg</div>
-    <div class="station">S<span>tation</span></div>
+    <div class="seg">Segment</div>
+    <div class="station"><span>Station</span></div>
     <div class="badge">Admin Panel</div>
   </div>
 
@@ -1005,11 +1005,11 @@ tr:hover td { background: rgba(255,255,255,0.015); }
         <div style="padding:1.25rem">
           <div class="field">
             <label class="field-label">URL de l'application</label>
-            <input class="field-input" value="https://segstation.org">
+            <input class="field-input" value="https://segmentstation.fr">
           </div>
           <div class="field">
             <label class="field-label">Email admin (notifications)</label>
-            <input class="field-input" value="admin@segstation.org">
+            <input class="field-input" value="admin@segmentstation.fr">
           </div>
           <div class="field">
             <label class="field-label">Inscription ouverte</label>
@@ -1422,7 +1422,7 @@ function exportCSV() {
   var blob = new Blob([header + rows], { type: 'text/csv' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'segstation-clients.csv';
+  a.download = 'segmentstation-clients.csv';
   a.click();
 }
 
