@@ -1,0 +1,26 @@
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log
+
+# Docker volumes locaux
+postgres_data/
+redis_data/
+letsencrypt_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegmentStation — Connexion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ─── Variables ─────────────────────────────────────────────── */
+:root {
+  --black:   #080808;
+  --black2:  #0f0f0f;
+  --black3:  #161616;
+  --black4:  #1e1e1e;
+  --black5:  #262626;
+  --orange:  #f4600c;
+  --orange2: #ff7a2e;
+  --orange3: #c44d08;
+  --orangeA: rgba(244,96,12,0.12);
+  --orangeB: rgba(244,96,12,0.06);
+  --white:   #ffffff;
+  --offwhite:#ede8e1;
+  --gray1:   #a0a0a0;
+  --gray2:   #959595;
+  --gray3:   #333333;
+  --green:   #4ade80;
+  --serif:   'DM Serif Display', Georgia, serif;
+  --mono:    'DM Mono', 'Courier New', monospace;
+  --sans:    'Outfit', sans-serif;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ─── Canvas background ─────────────────────────────────────── */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.35;
+}
+
+/* ─── Grain overlay ─────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ─── Glow blobs ────────────────────────────────────────────── */
+.glow {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+}
+.glow-1 {
+  width: 500px; height: 400px;
+  top: -100px; left: -150px;
+  background: radial-gradient(ellipse, rgba(244,96,12,0.07) 0%, transparent 70%);
+  animation: drift1 12s ease-in-out infinite;
+}
+.glow-2 {
+  width: 400px; height: 350px;
+  bottom: -80px; right: -100px;
+  background: radial-gradient(ellipse, rgba(244,96,12,0.05) 0%, transparent 70%);
+  animation: drift2 15s ease-in-out infinite;
+}
+@keyframes drift1 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(40px, 30px) scale(1.1); }
+}
+@keyframes drift2 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(-30px, -20px) scale(1.08); }
+}
+
+/* ─── Split layout ──────────────────────────────────────────── */
+.layout {
+  position: relative; z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(1000px, 96vw);
+  min-height: min(640px, 96vh);
+  border: 1px solid var(--black4);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(244,96,12,0.06);
+  animation: fadeIn 0.8s ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Left panel — visual ───────────────────────────────────── */
+.panel-left {
+  background: var(--black3);
+  border-right: 1px solid var(--black4);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.panel-left::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(244,96,12,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244,96,12,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Logo mark — cernes d'arbre */
+.logo-mark {
+  position: relative; z-index: 1;
+}
+.logo-mark svg { display: block; }
+
+.logo-wordmark {
+  position: relative; z-index: 1;
+  margin-top: 1.5rem;
+}
+.logo-wordmark .seg {
+  font-family: var(--serif);
+  font-size: 2.8rem;
+  line-height: 1;
+  color: var(--white);
+  letter-spacing: -0.03em;
+}
+.logo-wordmark .station {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  color: var(--gray1);
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+.logo-wordmark .station span { color: var(--orange); }
+
+/* Tagline */
+.panel-tagline {
+  position: relative; z-index: 1;
+}
+.panel-tagline p {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--gray1);
+  max-width: 260px;
+}
+.panel-tagline p em { color: var(--orange); font-style: normal; }
+
+/* Stats mini */
+.panel-stats {
+  position: relative; z-index: 1;
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--black4);
+}
+.stat { }
+.stat-val {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  color: var(--orange);
+  line-height: 1;
+}
+.stat-lbl {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--gray2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.2rem;
+}
+
+/* Floating cell visualization */
+.cell-visual {
+  position: absolute;
+  bottom: 3rem; right: -2rem;
+  opacity: 0.12;
+  animation: rotSlow 30s linear infinite;
+}
+@keyframes rotSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Right panel — form ────────────────────────────────────── */
+.panel-right {
+  background: var(--black2);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form-header { margin-bottom: 2.5rem; }
+.form-header-tag {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--orange);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.form-header-tag::before {
+  content: '';
+  display: inline-block;
+  width: 16px; height: 1px;
+  background: var(--orange);
+}
+.form-header h2 {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  letter-spacing: -0.03em;
+  color: var(--white);
+  line-height: 1.15;
+}
+.form-header p {
+  font-size: 0.82rem;
+  color: var(--gray2);
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+/* Form fields */
+.field {
+  margin-bottom: 1.25rem;
+}
+.field-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--gray2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.field-label a {
+  color: var(--orange);
+  text-decoration: none;
+  font-size: 0.62rem;
+  transition: opacity 0.2s;
+}
+.field-label a:hover { opacity: 0.7; }
+
+.field-wrap {
+  position: relative;
+}
+.field-wrap input {
+  width: 100%;
+  background: var(--black3);
+  border: 1px solid var(--black5);
+  border-radius: 3px;
+  padding: 0.8rem 1rem 0.8rem 2.75rem;
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+}
+.field-wrap input::placeholder { color: var(--gray3); }
+.field-wrap input:focus {
+  border-color: rgba(244,96,12,0.5);
+  background: var(--black4);
+  box-shadow: 0 0 0 3px rgba(244,96,12,0.06);
+}
+.field-wrap input.error {
+  border-color: rgba(239,68,68,0.6);
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.06);
+}
+
+.field-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%; transform: translateY(-50%);
+  color: var(--gray3);
+  pointer-events: none;
+  transition: color 0.2s;
+  display: flex;
+}
+.field-wrap:focus-within .field-icon { color: var(--orange); }
+
+.field-toggle {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%; transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--gray3); cursor: pointer;
+  padding: 0; display: flex;
+  transition: color 0.2s;
+}
+.field-toggle:hover { color: var(--gray1); }
+
+/* Error message */
+.field-error {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: #ef4444;
+  margin-top: 0.4rem;
+  display: none;
+}
+.field-error.show { display: block; }
+
+/* Remember me */
+.form-options {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 1.75rem;
+}
+.checkbox-wrap {
+  position: relative;
+  width: 16px; height: 16px; flex-shrink: 0;
+}
+.checkbox-wrap input[type="checkbox"] {
+  position: absolute; opacity: 0; width: 100%; height: 100%;
+  cursor: pointer; margin: 0;
+}
+.checkbox-custom {
+  width: 16px; height: 16px;
+  background: var(--black3);
+  border: 1px solid var(--black5);
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+  pointer-events: none;
+}
+.checkbox-wrap input:checked + .checkbox-custom {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+.checkbox-wrap input:checked + .checkbox-custom::after {
+  content: '';
+  width: 8px; height: 5px;
+  border: 1.5px solid white;
+  border-top: none; border-right: none;
+  transform: rotate(-45deg) translateY(-1px);
+  display: block;
+}
+.form-options label {
+  font-size: 0.78rem;
+  color: var(--gray2);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Submit button */
+.btn-login {
+  width: 100%;
+  background: var(--orange);
+  color: var(--black);
+  border: none;
+  border-radius: 3px;
+  padding: 0.9rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(244,96,12,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.btn-login::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.5s;
+}
+.btn-login:hover {
+  background: var(--orange2);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(244,96,12,0.3);
+}
+.btn-login:hover::after { transform: translateX(100%); }
+.btn-login:active { transform: translateY(0); }
+.btn-login.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* Spinner */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: var(--black);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.btn-login.loading .spinner { display: block; }
+.btn-login.loading .btn-text { display: none; }
+.btn-login.loading .btn-arrow { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SSO option */
+.sso-divider {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+.sso-divider::before, .sso-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--black4);
+}
+.sso-divider span {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--gray3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btn-sso {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--black5);
+  border-radius: 3px;
+  padding: 0.75rem 1rem;
+  color: var(--gray1);
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.btn-sso:hover {
+  border-color: var(--gray3);
+  color: var(--white);
+  background: var(--black3);
+}
+
+/* Footer */
+.form-footer {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--black4);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.form-footer-left {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--gray3);
+  line-height: 1.6;
+}
+.form-footer-left strong { color: var(--gray2); }
+.status-dot {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+}
+.dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.form-footer-right a {
+  font-size: 0.7rem;
+  color: var(--gray3);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.form-footer-right a:hover { color: var(--orange); }
+
+/* Success state */
+.success-overlay {
+  position: absolute; inset: 0;
+  background: var(--black2);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1rem;
+  z-index: 10;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s;
+}
+.success-overlay.show { opacity: 1; pointer-events: all; }
+.success-icon {
+  width: 56px; height: 56px;
+  background: rgba(74,222,128,0.1);
+  border: 1px solid rgba(74,222,128,0.3);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  animation: scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.success-text {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: var(--offwhite);
+  text-align: center;
+}
+.success-sub {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--gray2);
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+.progress-bar-wrap {
+  width: 160px; height: 2px;
+  background: var(--black4);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 1.8s ease;
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .layout { grid-template-columns: 1fr; min-height: auto; }
+  .panel-left { display: none; }
+  .panel-right { padding: 2.5rem 1.75rem; }
+  html, body { overflow: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- Background canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Glow blobs -->
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<!-- ─── Main layout ──────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- Left panel -->
+  <div class="panel-left">
+
+    <!-- Logo mark SVG — cernes d'arbre / cellule -->
+    <div>
+      <div class="logo-mark">
+        <svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="33" fill="none" stroke="rgba(244,96,12,0.15)" stroke-width="1.5"/>
+          <circle cx="36" cy="36" r="25" fill="none" stroke="rgba(244,96,12,0.22)" stroke-width="1.5"/>
+          <circle cx="36" cy="36" r="17" fill="none" stroke="rgba(244,96,12,0.30)" stroke-width="1.5"/>
+          <circle cx="36" cy="36" r="9"  fill="none" stroke="rgba(244,96,12,0.45)" stroke-width="1.5"/>
+          <circle cx="36" cy="36" r="4"  fill="#F4600C"/>
+          <!-- Ligne de segmentation -->
+          <line x1="1" y1="36" x2="71" y2="36" stroke="#F4600C" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.5"/>
+          <line x1="1"  y1="30" x2="1"  y2="42" stroke="#F4600C" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="71" y1="30" x2="71" y2="42" stroke="#F4600C" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="logo-wordmark">
+        <div class="seg">SegmentStation</div>
+        <div class="station"><span>by</span> BAME Informatique</div>
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <div class="panel-tagline">
+      <p>Segmentation cellulaire <em>Xenium</em> — sans ligne de code. Hébergé en <em>France</em>.</p>
+      <div class="panel-stats">
+        <div class="stat">
+          <div class="stat-val">&lt;5 min</div>
+          <div class="stat-lbl">pour lancer</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">100%</div>
+          <div class="stat-lbl">souverain FR</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">Baysor</div>
+          <div class="stat-lbl">algorithme</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative cell rings (large, bg) -->
+    <svg class="cell-visual" width="220" height="220" viewBox="0 0 220 220">
+      <circle cx="110" cy="110" r="105" fill="none" stroke="white" stroke-width="1"/>
+      <circle cx="110" cy="110" r="82"  fill="none" stroke="white" stroke-width="1"/>
+      <circle cx="110" cy="110" r="58"  fill="none" stroke="white" stroke-width="1"/>
+      <circle cx="110" cy="110" r="34"  fill="none" stroke="white" stroke-width="1"/>
+      <circle cx="110" cy="110" r="12"  fill="none" stroke="white" stroke-width="1.5"/>
+      <circle cx="110" cy="110" r="4"   fill="white" opacity="0.5"/>
+      <line x1="0" y1="110" x2="220" y2="110" stroke="white" stroke-width="0.5" stroke-dasharray="5,8"/>
+      <line x1="110" y1="0" x2="110" y2="220" stroke="white" stroke-width="0.5" stroke-dasharray="5,8"/>
+    </svg>
+  </div>
+
+  <!-- Right panel — form -->
+  <div class="panel-right" style="position:relative;">
+
+    <!-- Success overlay -->
+    <div class="success-overlay" id="successOverlay">
+      <div class="success-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="success-text">Connexion réussie</div>
+      <div class="success-sub">Redirection vers le dashboard…</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="form-header">
+      <div class="form-header-tag">Espace sécurisé</div>
+      <h2>Connexion<br>à votre instance</h2>
+      <p>Vos données restent sur votre infrastructure dédiée.</p>
+    </div>
+
+    <form id="loginForm" novalidate>
+
+      <!-- Email -->
+      <div class="field">
+        <div class="field-label">
+          <span>Adresse e-mail</span>
+        </div>
+        <div class="field-wrap">
+          <span class="field-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </span>
+          <input type="email" id="emailInput" placeholder="vous@laboratoire.fr" autocomplete="email" spellcheck="false">
+        </div>
+        <div class="field-error" id="emailError">Adresse e-mail invalide.</div>
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <div class="field-label">
+          <span>Mot de passe</span>
+          <a href="#" onclick="showForgot(event)">Mot de passe oublié ?</a>
+        </div>
+        <div class="field-wrap">
+          <span class="field-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+          <input type="password" id="passwordInput" placeholder="••••••••••••" autocomplete="current-password">
+          <button type="button" class="field-toggle" id="togglePwd" aria-label="Afficher/masquer">
+            <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="field-error" id="passwordError">Mot de passe incorrect.</div>
+      </div>
+
+      <!-- Remember -->
+      <div class="form-options">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="rememberMe">
+          <div class="checkbox-custom"></div>
+        </label>
+        <label for="rememberMe">Rester connecté pendant 30 jours</label>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn-login" id="btnLogin">
+        <span class="btn-text">Accéder à mon instance</span>
+        <span class="btn-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </span>
+        <div class="spinner"></div>
+      </button>
+
+      <!-- SSO 
+      <div class="sso-divider"><span>ou connexion via</span></div>
+      <button type="button" class="btn-sso" onclick="handleSSO()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Compte institutionnel (CNRS / INSERM / Université)
+      </button> -->
+
+    </form>
+
+    <!-- Footer -->
+    <div class="form-footer">
+      <div class="form-footer-left">
+        <div class="status-dot"><span class="dot"></span> Instance opérationnelle</div>
+        <strong>segmentstation.fr</strong> · Hébergé en France
+      </div>
+      <div class="form-footer-right">
+        <a href="#">Support</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── Scripts ──────────────────────────────────────────────── -->
+<script>
+// ─── Canvas — particules type données spatiales ───────────────
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Générer des "cellules" (petits cercles + connexions)
+const ORANGE = 'rgba(244,96,12,';
+const GRAY   = 'rgba(80,80,80,';
+
+class Cell {
+  constructor() { this.reset(); }
+  reset() {
+    this.x  = Math.random() * canvas.width;
+    this.y  = Math.random() * canvas.height;
+    this.r  = Math.random() * 1.8 + 0.4;
+    this.vx = (Math.random() - 0.5) * 0.18;
+    this.vy = (Math.random() - 0.5) * 0.18;
+    this.opacity = Math.random() * 0.5 + 0.1;
+    this.orange  = Math.random() < 0.15;
+    this.rings   = Math.random() < 0.06; // some cells show rings
+    this.ringR   = Math.random() * 18 + 8;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < -20 || this.x > canvas.width + 20 || this.y < -20 || this.y > canvas.height + 20) this.reset();
+  }
+  draw() {
+    const color = this.orange ? ORANGE : GRAY;
+    if (this.rings) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.ringR, 0, Math.PI * 2);
+      ctx.strokeStyle = color + (this.opacity * 0.4) + ')';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.ringR * 0.6, 0, Math.PI * 2);
+      ctx.strokeStyle = color + (this.opacity * 0.5) + ')';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = color + this.opacity + ')';
+    ctx.fill();
+  }
+}
+
+const cells = Array.from({ length: 120 }, () => new Cell());
+
+function drawConnections() {
+  const DIST = 80;
+  for (let i = 0; i < cells.length; i++) {
+    for (let j = i + 1; j < cells.length; j++) {
+      const dx = cells[i].x - cells[j].x;
+      const dy = cells[i].y - cells[j].y;
+      const d  = Math.sqrt(dx*dx + dy*dy);
+      if (d < DIST) {
+        const alpha = (1 - d/DIST) * 0.06;
+        ctx.beginPath();
+        ctx.moveTo(cells[i].x, cells[i].y);
+        ctx.lineTo(cells[j].x, cells[j].y);
+        ctx.strokeStyle = GRAY + alpha + ')';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawConnections();
+  cells.forEach(c => { c.update(); c.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ─── Form logic ───────────────────────────────────────────────
+const form      = document.getElementById('loginForm');
+const emailIn   = document.getElementById('emailInput');
+const passIn    = document.getElementById('passwordInput');
+const emailErr  = document.getElementById('emailError');
+const passErr   = document.getElementById('passwordError');
+const btnLogin  = document.getElementById('btnLogin');
+const togglePwd = document.getElementById('togglePwd');
+const eyeIcon   = document.getElementById('eyeIcon');
+
+// Toggle password visibility
+let pwdVisible = false;
+togglePwd.addEventListener('click', () => {
+  pwdVisible = !pwdVisible;
+  passIn.type = pwdVisible ? 'text' : 'password';
+  eyeIcon.innerHTML = pwdVisible
+    ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`
+    : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+});
+
+// Clear errors on input
+emailIn.addEventListener('input', () => {
+  emailIn.classList.remove('error');
+  emailErr.classList.remove('show');
+});
+passIn.addEventListener('input', () => {
+  passIn.classList.remove('error');
+  passErr.classList.remove('show');
+});
+
+// Validate email
+function isValidEmail(v) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+// Form submit
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  let valid = true;
+
+  if (!isValidEmail(emailIn.value.trim())) {
+    emailIn.classList.add('error');
+    emailErr.classList.add('show');
+    valid = false;
+  }
+  if (passIn.value.length < 6) {
+    passIn.classList.add('error');
+    passErr.textContent = 'Mot de passe trop court (6 caractères minimum).';
+    passErr.classList.add('show');
+    valid = false;
+  }
+  if (!valid) return;
+
+  // Loading state
+  btnLogin.classList.add('loading');
+
+  setTimeout(() => {
+    btnLogin.classList.remove('loading');
+    showSuccess();
+  }, 1800);
+});
+
+function showSuccess() {
+  const overlay = document.getElementById('successOverlay');
+  overlay.classList.add('show');
+  setTimeout(() => {
+    const fill = document.getElementById('progressFill');
+    fill.style.width = '100%';
+  }, 100);
+  // → Ici : window.location.href = '/dashboard';
+}
+
+function showForgot(e) {
+  e.preventDefault();
+  emailIn.focus();
+  emailIn.style.borderColor = 'rgba(244,96,12,0.5)';
+  setTimeout(() => emailIn.style.borderColor = '', 2000);
+  // → Ici : redirect to /forgot-password
+  alert('Veuillez contacter admin@segmentation.fr pour faire une demande de nouveau mot de passe');
+}
+
+function handleSSO() {
+  // → Ici : redirect to /auth/sso
+  alert('Redirection vers votre fournisseur d\'identité institutionnel…');
+}
+
+// Keyboard shortcut : Enter
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.activeElement !== btnLogin) {
+    form.dispatchEvent(new Event('submit'));
+  }
+});
+</script>
+</body>
+</html>
